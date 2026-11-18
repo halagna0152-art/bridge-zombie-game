@@ -1,92 +1,35 @@
-
-name: Build Android APK
+name: "لعبة بناء جسر الزومبي"
 
 on:
   push:
-    branches: [main, master]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build Zombie Bridge Game
+    name: Build Godot Android Game
     runs-on: ubuntu-latest
-
     container:
       image: barichello/godot-ci:4.4
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          lfs: true
 
-      - name: Configure Android Environment
+      - name: Setup Android SDK Components
         run: |
-          set -eux
-
-          echo "Checking Java..."
-          test -x /usr/lib/jvm/java-17-openjdk-amd64/bin/java
-
-          echo "Checking Android SDK..."
-          test -d /usr/lib/android-sdk
-
-          echo "Checking Debug Keystore..."
-          if [ ! -f /root/debug.keystore ]; then
-            keytool -genkeypair \
-              -v \
-              -keystore /root/debug.keystore \
-              -storepass android \
-              -alias androiddebugkey \
-              -keypass android \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
-
-          mkdir -p /root/.config/godot
-
-          cat > /root/.config/godot/editor_settings-4.4.tres <<'EOF'
-          [gd_resource type="EditorSettings" format=3]
-
-          [resource]
-          export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"
-          export/android/android_sdk_path = "/usr/lib/android-sdk"
-          export/android/debug_keystore = "/root/debug.keystore"
-          export/android/debug_keystore_user = "androiddebugkey"
-          export/android/debug_keystore_pass = "android"
-          EOF
-
-          java -version
-          godot --version
-
-      - name: Check Project
-        run: |
-          test -f project.godot
-          test -f export_presets.cfg
+          export ANDROID_SDK_ROOT="/opt/android-sdk"
+          echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Build Android APK
-        env:
-          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-          ANDROID_HOME: /usr/lib/android-sdk
-          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: /root/debug.keystore
-          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
-          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build/android
-
-          godot --headless \
-            --verbose \
-            --path . \
-            --export-debug "Android" \
-            build/android/bridge-zombie-game.apk
-
-          test -s build/android/bridge-zombie-game.apk
-
-      - name: Upload APK
+          export JAVA_HOME="/usr/lib/jvm/default-java"
+          export ANDROID_SDK_ROOT="/opt/android-sdk"
+          godot --headless --verbose --export-release "Android" build/android/game.apk
+        
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bridge-zombie-game-apk
-          path: build/android/bridge-zombie-game.apk
-          if-no-files-found: error
-          retention-days: 30
+          name: game-apk
+          path: build/android/*.apk
