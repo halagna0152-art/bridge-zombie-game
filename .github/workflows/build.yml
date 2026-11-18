@@ -27,15 +27,17 @@ jobs:
 
       - name: Prepare Export Presets
         run: |
-          # إضافة أسطر التوقيع لتجنب فشل التصدير إذا كانت مفقودة
-          echo 'keystore/release=""' >> export_presets.cfg
-          echo 'keystore/release_user=""' >> export_presets.cfg
-          echo 'keystore/release_password=""' >> export_presets.cfg
+          grep -q 'keystore/release' export_presets.cfg || echo 'keystore/release=""' >> export_presets.cfg
+          grep -q 'keystore/release_user' export_presets.cfg || echo 'keystore/release_user=""' >> export_presets.cfg
+          grep -q 'keystore/release_password' export_presets.cfg || echo 'keystore/release_password=""' >> export_presets.cfg
+
+      - name: Pre-heat Asset Cache
+        run: |
+          godot --headless --editor --quit || true
 
       - name: Build Android APK
         run: |
           mkdir -p build/android
-          # تثبيت قالب البناء وتصدير اللعبة
           godot --headless --verbose --install-android-build-template --export-release "Android" build/android/game.apk
         
       - name: Upload APK Artifact
