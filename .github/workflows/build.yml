@@ -3,12 +3,14 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build Godot Android Game
+    name: Build Zombie Bridge Game
     runs-on: ubuntu-latest
 
     container:
@@ -20,22 +22,26 @@ jobs:
         with:
           lfs: true
 
-      - name: Setup Export Templates
+      - name: Check Project Files
         run: |
-          mkdir -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/4.4.stable \
-          ~/.local/share/godot/export_templates/4.4.stable
+          test -f project.godot
+          test -f export_presets.cfg
 
-      - name: Build APK
+      - name: Build Android APK
         run: |
           mkdir -p build/android
-          godot --headless --verbose \
+          godot --headless --verbose --path . \
           --export-debug "Android" \
           build/android/bridge-zombie-game.apk
+
+      - name: Check APK
+        run: |
+          test -f build/android/bridge-zombie-game.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: bridge-zombie-game-apk
-          path: build/android/*.apk
-          
+          path: build/android/bridge-zombie-game.apk
+          if-no-files-found: error
+          retention-days: 30
