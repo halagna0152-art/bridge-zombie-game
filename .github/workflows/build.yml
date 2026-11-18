@@ -1,20 +1,41 @@
-name: Build APK
+
+name: Build Android APK
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build Godot Android Game
     runs-on: ubuntu-latest
-    name: Build the Game
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Build Godot APK
-        uses: abarrak/godot-ci@v4
+    container:
+      image: barichello/godot-ci:4.4
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
-          name: bridge-zombie-game
-          android: true
+          lfs: true
+
+      - name: Setup Export Templates
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/4.4.stable \
+          ~/.local/share/godot/export_templates/4.4.stable
+
+      - name: Build APK
+        run: |
+          mkdir -p build/android
+          godot --headless --verbose \
+          --export-debug "Android" \
+          build/android/bridge-zombie-game.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-zombie-game-apk
+          path: build/android/*.apk
           
