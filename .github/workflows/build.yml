@@ -1,0 +1,19 @@
+name: Build Godot APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Godot APK
+        uses: abarrak/godot-ci@v4
+        with:
+          name: bridge-zombie-game
+          android: true
+          android_keystore_release: false
