@@ -16,6 +16,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Start ADB Server
+        run: |
+          export ANDROID_SDK_ROOT="/opt/android-sdk"
+          export PATH="${PATH}:${ANDROID_SDK_ROOT}/platform-tools"
+          adb start-server || true
+
       - name: Build Android APK
         run: |
           mkdir -p build/android
